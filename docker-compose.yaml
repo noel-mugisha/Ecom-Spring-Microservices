@@ -14,7 +14,7 @@ services:
     - "5431:5432"
     restart: unless-stopped
 
-  mongodb:
+  mongo:
     container_name: ms_mongo_db
     image: mongo
     environment:
@@ -35,8 +35,13 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
       - ME_CONFIG_MONGODB_ADMINUSERNAME=root
       - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=password
+    networks:
+      - microservices-network
 
   mail-dev:
     container_name: ms_mail_dev

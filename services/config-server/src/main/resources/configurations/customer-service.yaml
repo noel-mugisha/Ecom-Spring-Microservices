@@ -1,0 +1,14 @@
+spring:
+  data:
+    mongodb:
+      username: root
+      password: password
+      host: localhost
+      port: 27018
+      database: customer_db
+      authentication-database: admin
+
+server:
+  port: 8090
+  servlet:
+    context-path: /api/v1

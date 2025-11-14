@@ -18,6 +18,6 @@ spring:
     baseline-on-migrate: true
 
 server:
-  port: 8050
+  port: 8051
   servlet:
-    context-path: /api/v1/products
+    context-path: /api/v1

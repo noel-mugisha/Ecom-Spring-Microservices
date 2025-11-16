@@ -1,7 +1,7 @@
 package com.ecom.productservice.controllers;
 
 import com.ecom.productservice.dto.request.ProductRequest;
-import com.ecom.productservice.dto.response.ProductPurchaseRequest;
+import com.ecom.productservice.dto.request.ProductPurchaseRequest;
 import com.ecom.productservice.dto.response.ProductPurchaseResponse;
 import com.ecom.productservice.dto.response.ProductResponse;
 import com.ecom.productservice.services.ProductService;

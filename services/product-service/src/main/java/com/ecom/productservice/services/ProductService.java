@@ -1,7 +1,7 @@
 package com.ecom.productservice.services;
 
 import com.ecom.productservice.dto.request.ProductRequest;
-import com.ecom.productservice.dto.response.ProductPurchaseRequest;
+import com.ecom.productservice.dto.request.ProductPurchaseRequest;
 import com.ecom.productservice.dto.response.ProductPurchaseResponse;
 import com.ecom.productservice.dto.response.ProductResponse;
 import com.ecom.productservice.entities.Category;
@@ -11,7 +11,6 @@ import com.ecom.productservice.exceptions.ResourceNotFoundException;
 import com.ecom.productservice.mappers.ProductMapper;
 import com.ecom.productservice.repositories.CategoryRepository;
 import com.ecom.productservice.repositories.ProductRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

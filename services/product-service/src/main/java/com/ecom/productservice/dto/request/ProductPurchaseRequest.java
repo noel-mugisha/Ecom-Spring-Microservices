@@ -1,4 +1,4 @@
-package com.ecom.productservice.dto.response;
+package com.ecom.productservice.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 

@@ -5,7 +5,6 @@ import com.ecom.customerservice.exceptions.DuplicateEmailException;
 import com.ecom.customerservice.exceptions.ResourceNotFoundException;
 import com.ecom.customerservice.mappers.CustomerMapper;
 import com.ecom.customerservice.repository.CustomerRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +20,14 @@ public class CustomerService {
         return customerRepository.existsByEmail(email);
     }
 
-    public CustomerDto addCustomer(@Valid CustomerDto requestDto) {
+    public CustomerDto addCustomer(CustomerDto requestDto) {
         if (checkDuplicateEmail(requestDto.email()))
             throw new DuplicateEmailException("Email already exists");
         var savedCustomer = customerRepository.save(customerMapper.toEntity(requestDto));
         return customerMapper.toDto(savedCustomer);
     }
 
-    public CustomerDto updateCustomer (String id, CustomerDto requestDto) {
+    public CustomerDto updateCustomer(String id, CustomerDto requestDto) {
         if (customerRepository.findById(id).isEmpty())
             throw new ResourceNotFoundException("Customer not found");
         var customer = customerRepository.findById(id).get();
@@ -48,7 +47,7 @@ public class CustomerService {
         customerRepository.deleteById(id);
     }
 
-    public List<CustomerDto> getAllCustomers () {
+    public List<CustomerDto> getAllCustomers() {
         return customerRepository.findAll()
                 .stream()
                 .map(customerMapper::toDto)

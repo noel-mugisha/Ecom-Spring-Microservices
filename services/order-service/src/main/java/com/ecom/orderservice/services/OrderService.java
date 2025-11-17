@@ -1,6 +1,7 @@
 package com.ecom.orderservice.services;
 
 import com.ecom.orderservice.clients.customer.CustomerClient;
+import com.ecom.orderservice.clients.customer.dto.CustomerClientDto;
 import com.ecom.orderservice.clients.product.ProductClient;
 import com.ecom.orderservice.clients.product.dto.ProductPurchaseResponse;
 import com.ecom.orderservice.dto.request.OrderRequest;
@@ -8,10 +9,14 @@ import com.ecom.orderservice.dto.response.OrderResponse;
 import com.ecom.orderservice.entities.Order;
 import com.ecom.orderservice.entities.OrderLine;
 import com.ecom.orderservice.exceptions.ResourceNotFoundException;
+import com.ecom.orderservice.kafka.OrderProducer;
+import com.ecom.orderservice.kafka.events.OrderConfirmationEvent;
 import com.ecom.orderservice.mapper.OrderMapper;
 import com.ecom.orderservice.repositories.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,24 +36,28 @@ public class OrderService {
     private final CustomerClient customerClient;
     private final ProductClient productClient;
     private final OrderMapper orderMapper;
+    private final OrderProducer orderProducer;
+
+    @Autowired
+    @Lazy
+    private OrderService self;
 
     public OrderResponse createOrder(OrderRequest orderRequest) {
         log.info("Creating order for customer: {}", orderRequest.customerId());
         // Step 1: get the customer details (external call)
         var customer = customerClient.getCustomerById(orderRequest.customerId());
-
         // Step 2: Purchase products (external call)
         var productPurchaseResponses = productClient.purchaseProducts(orderRequest);
-
         // Step 3: Calculate the total amount
         var totalAmount = calculateTotalAmount(productPurchaseResponses);
+        // Step 4: Persist the order
+        var order = self.persistOrder(orderRequest, productPurchaseResponses, totalAmount);
+        // TODO: Step5: Start payment process
 
-        // TODO: Step4: Start payment process
+        // Step6: Send order confirmation to the notification microservice
+        sendOrderConfirmationEvent(order, customer, productPurchaseResponses);
 
-        // TODO: Step5: Send order confirmation to notification microservice
-
-        // Step 6: Persist order and order lines (single transaction)
-        return persistOrder(orderRequest, productPurchaseResponses, totalAmount);
+        return orderMapper.toOrderResponse(order);
     }
 
     public List<OrderResponse> getAllOrders() {
@@ -71,6 +80,20 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
+    /**
+     * Sends order confirmation event to notification microservice.
+     */
+    private void sendOrderConfirmationEvent(Order order, CustomerClientDto customer, List<ProductPurchaseResponse> products) {
+        var event = new OrderConfirmationEvent(
+                order.getReference(),
+                order.getTotalAmount(),
+                order.getPaymentMethod(),
+                customer,
+                products
+        );
+        orderProducer.sendOrderConfirmationEvent(event);
+        log.info("Order confirmation event sent successfully for order {}", order.getReference());
+    }
 
     /**
      * Calculates the total order amount from purchased products.
@@ -86,7 +109,7 @@ public class OrderService {
      * Persists the order and order lines in a single transaction.
      */
     @Transactional
-    protected OrderResponse persistOrder(
+    protected Order persistOrder(
             OrderRequest orderRequest,
             List<ProductPurchaseResponse> productResponses,
             BigDecimal totalAmount) {
@@ -116,7 +139,7 @@ public class OrderService {
         var savedOrder = orderRepository.save(orderEntity);
 
         log.info("Order created successfully: {}", savedOrder.getReference());
-        return orderMapper.toOrderResponse(savedOrder);
+        return savedOrder;
     }
 
     /**

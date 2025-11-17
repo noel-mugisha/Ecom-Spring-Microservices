@@ -15,6 +15,12 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
+  kafka:
+    bootstrap-servers: localhost:9094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 application:
   config:
     customer-service-url: http://localhost:8222/api/v1/customers

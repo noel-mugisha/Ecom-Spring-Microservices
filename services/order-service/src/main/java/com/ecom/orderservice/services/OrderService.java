@@ -1,22 +1,19 @@
 package com.ecom.orderservice.services;
 
-import com.ecom.orderservice.clients.customer.CustomerServiceClient;
-import com.ecom.orderservice.clients.product.ProductServiceClient;
+import com.ecom.orderservice.clients.customer.CustomerClient;
+import com.ecom.orderservice.clients.product.ProductClient;
 import com.ecom.orderservice.clients.product.dto.ProductPurchaseResponse;
 import com.ecom.orderservice.dto.request.OrderRequest;
 import com.ecom.orderservice.dto.response.OrderResponse;
 import com.ecom.orderservice.entities.Order;
 import com.ecom.orderservice.entities.OrderLine;
-import com.ecom.orderservice.exceptions.BusinessLogicException;
 import com.ecom.orderservice.exceptions.ResourceNotFoundException;
 import com.ecom.orderservice.mapper.OrderMapper;
 import com.ecom.orderservice.repositories.OrderRepository;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashSet;
@@ -31,17 +28,17 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final CustomerServiceClient customerServiceClient;
-    private final ProductServiceClient productServiceClient;
+    private final CustomerClient customerClient;
+    private final ProductClient productClient;
     private final OrderMapper orderMapper;
 
     public OrderResponse createOrder(OrderRequest orderRequest) {
         log.info("Creating order for customer: {}", orderRequest.customerId());
-        // Step 1: Validate customer exists (external call)
-        validateCustomerExists(orderRequest.customerId());
+        // Step 1: get the customer details (external call)
+        var customer = customerClient.getCustomerById(orderRequest.customerId());
 
         // Step 2: Purchase products (external call)
-        var productPurchaseResponses = purchaseProducts(orderRequest);
+        var productPurchaseResponses = productClient.purchaseProducts(orderRequest);
 
         // Step 3: Calculate the total amount
         var totalAmount = calculateTotalAmount(productPurchaseResponses);
@@ -74,58 +71,6 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
-    /**
-     * Validates that the customer exists in the customer service.
-     */
-    private void validateCustomerExists(String customerId) {
-        try {
-            var apiResponse = customerServiceClient.existsById(customerId);
-
-            if (apiResponse == null || "false".equalsIgnoreCase(apiResponse.message())) {
-                log.warn("Customer not found: {}", customerId);
-                throw new ResourceNotFoundException(
-                        String.format("Customer with ID %s does not exist", customerId)
-                );
-            }
-        } catch (FeignException e) {
-            log.error("Customer service call failed for customer: {}", customerId, e);
-            throw new BusinessLogicException(
-                    "Unable to validate customer. Please try again later."
-            );
-        }
-    }
-
-    /**
-     * Purchases products through the product service.
-     */
-    private List<ProductPurchaseResponse> purchaseProducts(OrderRequest orderRequest) {
-        var productPurchaseRequests = orderMapper.toProductPurchaseRequests(orderRequest.products());
-
-        try {
-            var responses = productServiceClient.purchaseProducts(productPurchaseRequests);
-            if (CollectionUtils.isEmpty(responses)) {
-                throw new BusinessLogicException("Product service returned empty response");
-            }
-            log.info("Successfully purchased {} products", responses.size());
-            return responses;
-
-        } catch (FeignException.NotFound e) {
-            log.error("One or more products not found", e);
-            throw new ResourceNotFoundException(
-                    "One or more products in the order do not exist"
-            );
-        } catch (FeignException.BadRequest e) {
-            log.error("Invalid product purchase request", e);
-            throw new BusinessLogicException(
-                    "Invalid product information. Please check product IDs and quantities."
-            );
-        } catch (FeignException e) {
-            log.error("Product service call failed", e);
-            throw new BusinessLogicException(
-                    "Unable to process product purchase. Please try again later."
-            );
-        }
-    }
 
     /**
      * Calculates the total order amount from purchased products.

@@ -1,6 +1,7 @@
 package com.ecom.orderservice.dto.response;
 
 import com.ecom.orderservice.enums.PaymentMethod;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,7 +12,9 @@ public record OrderResponse(
         String reference,
         PaymentMethod paymentMethod,
         BigDecimal totalAmount,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime updatedAt
 ) {
 }

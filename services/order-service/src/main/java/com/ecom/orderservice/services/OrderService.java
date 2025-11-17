@@ -4,6 +4,7 @@ import com.ecom.orderservice.clients.customer.CustomerClient;
 import com.ecom.orderservice.clients.customer.dto.CustomerClientDto;
 import com.ecom.orderservice.clients.product.ProductClient;
 import com.ecom.orderservice.clients.product.dto.ProductPurchaseResponse;
+import com.ecom.orderservice.dto.OrderLineDto;
 import com.ecom.orderservice.dto.request.OrderRequest;
 import com.ecom.orderservice.dto.response.OrderResponse;
 import com.ecom.orderservice.entities.Order;
@@ -11,7 +12,8 @@ import com.ecom.orderservice.entities.OrderLine;
 import com.ecom.orderservice.exceptions.ResourceNotFoundException;
 import com.ecom.orderservice.kafka.OrderProducer;
 import com.ecom.orderservice.kafka.events.OrderConfirmationEvent;
-import com.ecom.orderservice.mapper.OrderMapper;
+import com.ecom.orderservice.mappers.OrderLineMapper;
+import com.ecom.orderservice.mappers.OrderMapper;
 import com.ecom.orderservice.repositories.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,26 +23,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
-
+    @Autowired
+    @Lazy
+    private OrderService self;
     private final OrderRepository orderRepository;
     private final CustomerClient customerClient;
     private final ProductClient productClient;
     private final OrderMapper orderMapper;
     private final OrderProducer orderProducer;
-
-    @Autowired
-    @Lazy
-    private OrderService self;
+    private final OrderLineMapper orderLineMapper;
 
     public OrderResponse createOrder(OrderRequest orderRequest) {
         log.info("Creating order for customer: {}", orderRequest.customerId());
@@ -78,6 +76,14 @@ public class OrderService {
             throw new ResourceNotFoundException("Order not found with orderId: " + orderId);
         }
         orderRepository.deleteById(orderId);
+    }
+
+    public List<OrderLineDto> getOrderLinesByOrderId(UUID orderId) {
+        var order = orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException("Order not found with orderId: " + orderId)
+        );
+        var orderLines = new ArrayList<>(order.getOrderLines());
+        return orderLineMapper.toOrderLineDtos(orderLines);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.ecom.orderservice.controllers;
 
+import com.ecom.orderservice.dto.OrderLineDto;
 import com.ecom.orderservice.dto.request.OrderRequest;
 import com.ecom.orderservice.dto.response.OrderResponse;
 import com.ecom.orderservice.services.OrderService;
@@ -42,5 +43,10 @@ public class OrderController {
     public ResponseEntity<Void> deleteOrderById(@PathVariable UUID id) {
         orderService.deleteOrderById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/order-lines")
+    public ResponseEntity<List<OrderLineDto>> getOrderLinesByOrderId(@PathVariable UUID id) {
+        return ResponseEntity.ok(orderService.getOrderLinesByOrderId(id));
     }
 }

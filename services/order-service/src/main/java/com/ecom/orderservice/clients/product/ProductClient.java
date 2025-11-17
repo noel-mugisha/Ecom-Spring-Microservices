@@ -4,7 +4,7 @@ import com.ecom.orderservice.clients.product.dto.ProductPurchaseResponse;
 import com.ecom.orderservice.dto.request.OrderRequest;
 import com.ecom.orderservice.exceptions.BusinessLogicException;
 import com.ecom.orderservice.exceptions.ResourceNotFoundException;
-import com.ecom.orderservice.mapper.OrderMapper;
+import com.ecom.orderservice.mappers.OrderMapper;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

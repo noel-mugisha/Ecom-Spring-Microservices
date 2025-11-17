@@ -1,4 +1,4 @@
-package com.ecom.orderservice.mapper;
+package com.ecom.orderservice.mappers;
 
 import com.ecom.orderservice.clients.product.dto.ProductPurchaseRequest;
 import com.ecom.orderservice.dto.request.OrderRequest;

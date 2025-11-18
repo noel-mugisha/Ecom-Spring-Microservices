@@ -2,6 +2,8 @@ package com.ecom.orderservice.services;
 
 import com.ecom.orderservice.clients.customer.CustomerClient;
 import com.ecom.orderservice.clients.customer.dto.CustomerClientDto;
+import com.ecom.orderservice.clients.payment.PaymentClient;
+import com.ecom.orderservice.clients.payment.dto.PaymentClientRequest;
 import com.ecom.orderservice.clients.product.ProductClient;
 import com.ecom.orderservice.clients.product.dto.ProductPurchaseResponse;
 import com.ecom.orderservice.dto.OrderLineDto;
@@ -39,6 +41,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final OrderProducer orderProducer;
     private final OrderLineMapper orderLineMapper;
+    private final PaymentClient paymentClient;
 
     public OrderResponse createOrder(OrderRequest orderRequest) {
         log.info("Creating order for customer: {}", orderRequest.customerId());
@@ -50,8 +53,8 @@ public class OrderService {
         var totalAmount = calculateTotalAmount(productPurchaseResponses);
         // Step 4: Persist the order
         var order = self.persistOrder(orderRequest, productPurchaseResponses, totalAmount);
-        // TODO: Step5: Start payment process
-
+        // Step5: Start the payment process
+        startPaymentProcess(order, customer);
         // Step6: Send order confirmation to the notification microservice
         sendOrderConfirmationEvent(order, customer, productPurchaseResponses);
 
@@ -153,5 +156,18 @@ public class OrderService {
      */
     private String generateOrderReference() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+
+    private void startPaymentProcess(Order order, CustomerClientDto customer) {
+        var paymentRequest = new PaymentClientRequest(
+                order.getId(),
+                order.getReference(),
+                order.getTotalAmount(),
+                order.getPaymentMethod(),
+                customer
+        );
+        paymentClient.sendPaymentRequest(paymentRequest);
+        log.info("Payment request sent successfully for order {}", order.getReference());
     }
 }

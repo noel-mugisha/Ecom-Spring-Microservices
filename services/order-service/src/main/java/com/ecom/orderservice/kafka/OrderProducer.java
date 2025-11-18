@@ -16,7 +16,7 @@ public class OrderProducer {
     private final KafkaTemplate<String, OrderConfirmationEvent> kafkaTemplate;
 
     public void sendOrderConfirmationEvent(OrderConfirmationEvent event) {
-        log.info("Producing order confirmation event for order id: {}", event.orderReference());
+        log.info("Producing order confirmation event for order : {}", event.orderReference());
         Message<OrderConfirmationEvent> message = MessageBuilder
                 .withPayload(event)
                 .setHeader(KafkaHeaders.TOPIC, "order-topic")

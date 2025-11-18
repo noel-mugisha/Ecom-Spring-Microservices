@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="config-server" />
         <module name="discovery-service" />
+        <module name="payment-service" />
       </profile>
       <profile name="Annotation profile for product-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -30,6 +31,7 @@
       <module name="customer-service" options="-parameters" />
       <module name="discovery-service" options="-parameters" />
       <module name="order-service" options="-parameters" />
+      <module name="payment-service" options="-parameters" />
       <module name="product-service" options="-parameters" />
     </option>
   </component>

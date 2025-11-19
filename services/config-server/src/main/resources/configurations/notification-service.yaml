@@ -12,15 +12,11 @@ spring:
     bootstrap-servers: localhost:9094
     consumer:
       group-id: notification-service-group
+      auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      auto-offset-reset: latest
       properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: '*'
-        spring.json.type.mapping: >
-          com.ecom.paymentservice.kafka.PaymentNotification:com.ecom.notificationservice.kafka.dto.PaymentConfirmation,
-          com.ecom.orderservice.kafka.events.OrderConfirmationEvent:com.ecom.notificationservice.kafka.dto.OrderConfirmation
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.ByteArrayDeserializer
 
   mail:
     host: localhost

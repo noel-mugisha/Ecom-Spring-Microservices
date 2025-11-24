@@ -20,6 +20,9 @@ import com.ecom.orderservice.repositories.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +46,11 @@ public class OrderService {
     private final OrderLineMapper orderLineMapper;
     private final PaymentClient paymentClient;
 
+    @Caching(evict = {
+            @CacheEvict(value = "orders.byId", allEntries = true),
+            @CacheEvict(value = "orders.all", allEntries = true),
+            @CacheEvict(value = "orders.lines.byOrderId", allEntries = true)
+    })
     public OrderResponse createOrder(OrderRequest orderRequest) {
         log.info("Creating order for customer: {}", orderRequest.customerId());
         // Step 1: get the customer details (external call)
@@ -61,12 +69,14 @@ public class OrderService {
         return orderMapper.toOrderResponse(order);
     }
 
+    @Cacheable(value = "orders.all")
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
     }
 
+    @Cacheable(value = "orders.byId", key = "#orderId")
     public OrderResponse getOrderById(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
@@ -74,6 +84,11 @@ public class OrderService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "orders.byId", key = "#orderId"),
+            @CacheEvict(value = "orders.all", allEntries = true),
+            @CacheEvict(value = "orders.lines.byOrderId", key = "#orderId")
+    })
     public void deleteOrderById(UUID orderId) {
         if (!orderRepository.existsById(orderId)) {
             throw new ResourceNotFoundException("Order not found with orderId: " + orderId);
@@ -81,6 +96,7 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
+    @Cacheable(value = "orders.lines.byOrderId", key = "#orderId")
     public List<OrderLineDto> getOrderLinesByOrderId(UUID orderId) {
         var order = orderRepository.findById(orderId).orElseThrow(
                 () -> new ResourceNotFoundException("Order not found with orderId: " + orderId)

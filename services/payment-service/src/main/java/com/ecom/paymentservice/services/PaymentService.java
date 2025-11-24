@@ -10,6 +10,9 @@ import com.ecom.paymentservice.repository.PaymentRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +26,10 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final PaymentProducer paymentProducer;
 
+    @Caching(evict = {
+            @CacheEvict(value = "payments.byId", allEntries = true),
+            @CacheEvict(value = "payments.all", allEntries = true)
+    })
     public PaymentResponse createPayment(PaymentRequest paymentRequest) {
         var savedPayment = paymentRepository.save(paymentMapper.toPaymentEntity(paymentRequest));
         // send payment event to the notification service
@@ -39,12 +46,14 @@ public class PaymentService {
         return paymentMapper.toPaymentResponse(savedPayment);
     }
 
+    @Cacheable(value = "payments.all")
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll().stream()
                 .map(paymentMapper::toPaymentResponse)
                 .toList();
     }
 
+    @Cacheable(value = "payments.byId", key = "#paymentId")
     public PaymentResponse getPaymentById(UUID paymentId) {
         var payment = paymentRepository.findById(paymentId).orElseThrow(
                 () -> new ResourceNotFoundException("Payment not found with id: " + paymentId)

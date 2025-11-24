@@ -1,5 +1,27 @@
 
 services:
+  redis:
+    container_name: ms_redis
+    image: redis:7-alpine
+    command: >
+      sh -c "redis-server --appendonly yes ${REDIS_PASSWORD:+ --requirepass ${REDIS_PASSWORD}}"
+    environment:
+      # Set a password if you want to protect Redis. Leave empty to disable auth.
+      # Ensure your microservices use this password if set.
+      - REDIS_PASSWORD=
+    volumes:
+      - redis_data:/data
+    networks:
+      - microservices-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   postgres:
     container_name: ms_pg_sql
     image: postgres
@@ -77,3 +99,4 @@ networks:
 volumes:
   postgres:
   mongo:
+  redis_data:

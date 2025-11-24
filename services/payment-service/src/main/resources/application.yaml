@@ -4,3 +4,16 @@ spring:
 
   config:
     import: optional:configserver:http://localhost:8888
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+app:
+  cache:
+    ttl-seconds: ${CACHE_TTL_SECONDS:300}

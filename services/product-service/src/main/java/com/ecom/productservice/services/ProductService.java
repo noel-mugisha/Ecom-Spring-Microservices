@@ -12,6 +12,9 @@ import com.ecom.productservice.mappers.ProductMapper;
 import com.ecom.productservice.repositories.CategoryRepository;
 import com.ecom.productservice.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,10 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "products.all", allEntries = true),
+            @CacheEvict(value = "products.byId", allEntries = true)
+    })
     public ProductResponse createOrUpdateProduct(ProductRequest request) {
         Optional<Product> existingProduct = productRepository.findByName(request.name());
         if (existingProduct.isPresent()) {
@@ -40,12 +47,14 @@ public class ProductService {
         }
     }
 
+    @Cacheable(value = "products.all")
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
                 .map(productMapper::toProductResponse)
                 .toList();
     }
 
+    @Cacheable(value = "products.byId", key = "#id")
     public ProductResponse getProductById(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product with id [" + id + "] not found."));
@@ -53,6 +62,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "products.all", allEntries = true),
+            @CacheEvict(value = "products.byId", allEntries = true)
+    })
     public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> purchaseRequests) {
         return purchaseRequests.stream().map(request -> {
             Product product = productRepository.findById(request.id())

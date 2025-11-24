@@ -91,6 +91,14 @@ services:
       - "1080:1080"
       - "1025:1025"
 
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - microservices-network
+    restart: unless-stopped
 
 networks:
   microservices-network:

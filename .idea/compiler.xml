@@ -21,7 +21,7 @@
         </processorPath>
         <module name="notification-service" />
       </profile>
-      <profile name="Annotation profile for customer-service" enabled="true">
+      <profile name="Annotation profile for product-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -29,8 +29,8 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.6.2/mapstruct-processor-1.6.2.jar" />
         </processorPath>
-        <module name="customer-service" />
         <module name="product-service" />
+        <module name="customer-service" />
         <module name="order-service" />
       </profile>
     </annotationProcessing>

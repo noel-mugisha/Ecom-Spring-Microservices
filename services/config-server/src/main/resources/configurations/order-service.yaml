@@ -21,6 +21,62 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true # Activates Resilience4j
+      client:
+        config:
+          default:
+            connectTimeout: 5000 # 5s to establish network connection
+            readTimeout: 5000    # 5s max to read data (Safety net for the socket)
+
+resilience4j:
+  # 1. CIRCUIT BREAKER (The Shield)
+  circuitbreaker:
+    configs:
+      default: # The "Template" for all services
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 100       # Monitor last 100 calls
+        minimumNumberOfCalls: 10     # Don't trip until at least 10 calls happen
+        failureRateThreshold: 50     # Trip if 50% calls fail
+        waitDurationInOpenState: 10s # Wait 10s before allowing test calls
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      product-service:
+        baseConfig: default
+      customer-service:
+        baseConfig: default
+      payment-service:
+        baseConfig: default
+  # 2. TIMELIMITER (The Stopwatch)
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s # If logic takes > 3s, cancel the thread immediately
+    instances:
+      product-service:
+        baseConfig: default
+      customer-service:
+        baseConfig: default
+      payment-service:
+        baseConfig: default
+  # 3. RETRY (The Second Chance)
+  retry:
+    configs:
+      default:
+        maxAttempts: 3      # Try 3 times total (1 initial + 2 retries)
+        waitDuration: 100ms # Wait 100ms between attempts
+    instances:
+      product-service:
+        baseConfig: default
+      customer-service:
+        baseConfig: default
+      payment-service:
+        baseConfig: default
+
 application:
   config:
     customer-service-url: http://localhost:8222/api/v1/customers

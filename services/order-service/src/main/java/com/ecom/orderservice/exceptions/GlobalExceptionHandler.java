@@ -1,6 +1,7 @@
 package com.ecom.orderservice.exceptions;
 
 import com.ecom.orderservice.dto.ApiErrorResponse;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -60,5 +61,16 @@ public class GlobalExceptionHandler {
             BusinessLogicException exception
     ) {
         return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception);
+    }
+
+    // Resilence4j Exception Handler
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<ApiErrorResponse> handleCircuitBreakerOpen(CallNotPermittedException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiErrorResponse.builder()
+                        .statusCode(503)
+                        .errorReason("Service Unavailable")
+                        .message("The system is currently experiencing high load or a dependency is down. Please try again later.")
+                        .build());
     }
 }

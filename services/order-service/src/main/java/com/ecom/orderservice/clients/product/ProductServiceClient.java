@@ -8,7 +8,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "product-service", path = "api/v1/products")
+@FeignClient(
+        name = "product-service",
+        path = "api/v1/products",
+        fallback = ProductClientFallback.class
+)
 public interface ProductServiceClient {
     @PostMapping("/purchase")
     List<ProductPurchaseResponse> purchaseProducts(

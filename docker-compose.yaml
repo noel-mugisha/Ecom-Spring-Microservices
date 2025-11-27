@@ -100,6 +100,26 @@ services:
       - microservices-network
     restart: unless-stopped
 
+  keycloak:
+    container_name: ms_keycloak
+    image: quay.io/keycloak/keycloak:24.0.2
+    command: start-dev # Optimized for development (no HTTPS required)
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Connect to your existing Postgres service
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: password
+    ports:
+      - "8180:8080" # Host Port 8180 -> Container Port 8080
+    networks:
+      - microservices-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
 networks:
   microservices-network:
     driver: bridge

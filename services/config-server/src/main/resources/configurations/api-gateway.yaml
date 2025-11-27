@@ -1,51 +1,51 @@
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/ecom-ms
+
   cloud:
     gateway:
-      mvc:
-        discovery:
-          locator:
-            enabled: false
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
 
-        routes:
-          # --- Customer Service ---
-          - id: customer-service
-            uri: lb://customer-service
-            predicates:
-              - Path=/api/v1/customers/**
+      routes:
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/v1/customers/**
 
-          # --- Order Service ---
-          - id: order-service
-            uri: lb://order-service
-            predicates:
-              - Path=/api/v1/orders/**
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/v1/orders/**
 
-          # --- Payment Service ---
-          - id: payment-service
-            uri: lb://payment-service
-            predicates:
-              - Path=/api/v1/payments/**
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/v1/products/**
 
-          # --- Product Service ---
-          - id: product-service
-            uri: lb://product-service
-            predicates:
-              - Path=/api/v1/products/**, /api/v1/categories/**
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/payments/**
 
-        # --- Global CORS Configuration (Crucial for Frontend) ---
-        # This allows your React/Angular/Vue app to talk to the Gateway
-        cors:
-          allowed-origins:
-            - "http://localhost:3000" # React default
-            - "http://localhost:4200" # Angular default
-            - "http://localhost:5173" # Vite/Vue default
-          allowed-methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - OPTIONS
-          allowed-headers: "*"
-          allow-credentials: true
+      # CORS Configuration for Reactive Gateway
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200,http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
 
 server:
   port: 8222
